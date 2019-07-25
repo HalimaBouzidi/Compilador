@@ -1,0 +1,404 @@
+options{
+STATIC = false;
+DEBUG_LOOKAHEAD = false;
+}
+PARSER_BEGIN(Scanner_1)
+package compilador;
+import java.io.*;
+import java.util.*;
+import javax.swing.JOptionPane;
+
+public class Scanner_1{
+
+boolean Menosshort = false; 
+public void processa() throws Exception{
+Token t = new Token ();
+
+do {
+
+t = getNextToken(); 
+String nomeToken = tokenImage[t.kind]; 
+
+} while(t.kind!=0); // 0 c'est le end of file EOF
+}
+
+public static void main(String args[], String x) throws ParseException, FileNotFoundException {
+
+try {
+
+
+}catch (Error e){
+System.out.println(e.getMessage()); 
+}
+
+}
+}
+PARSER_END(Scanner_1)
+
+//*****************************************/
+/*****      TOKEN DEFINITIONS        *****/
+/*****************************************/
+
+//Token Manager, Analyse lexicale
+
+SKIP : // TOKENS A IGNORER
+{
+ " "
+| "\r" 
+| "\t" 
+| "\n"
+| <COMENTAIRE: "//" (<COM>)*>
+| <COMENTAIRES: "/*" ("\n" | "\r" | <COM>)* "*/" >
+| <#COM: ( ~["\"","\\","\n","\r"] | "\\" ( ["n","t","b","r","f","\\","\'","\""] | ( ["\n","\r"] | "\r\n")))*>
+
+}
+
+//Static token
+TOKEN : 
+{
+  <POINTS: ":">
+| < COMMA : ",">
+| < LBR : "(">
+| < RBR : ")">
+| < SEMIC : ";" >
+| < ASSIGN : ":=" >
+| <Relation: "::">
+| < OPENACCOLADE: "{" >
+| < CLOSEDACCOLADE: "}" >
+| <Equal: "=" >
+| <Diffrent: "<>">
+| <Comp: "<"|">"|"<="|">=">
+| <APOSTROPHE: "'">
+| < PLUS_SIGN : "+" >
+| < MINUS_SIGN : "-" >
+| < MULT_SIGN : "*" >
+| < DIV_SIGN : "/" >
+| <CHOIX :"~">
+| <AND: "AND" | "And" | "and">
+| <THEN : "THEN" | "Then" | "then">
+| <DEBUT: "DEBUT"|"Debut"|"debut"> 
+| <IF : "IF" | "If" | "if"> 
+| <INTERFACE: "INTERFACE" | "Interface" | "interface">
+| <INIT: "INITIALISATIONS" | "Initialisations" | "initialisations">
+| <ACTIONS: "ACTIONS" | "Actions" | "actions">
+| <COMPOSANT: "COMP">
+| <PROP : "PROP">
+| <EVT : "EVT" | "EVET">
+| <INV : "INV">
+| <FIN : "FIN">
+| <Int : "int" | "INT" | "Int">
+| <Bool: "Boolean" | "Bool" | "bool">
+| <String: "STRING" | "String" | "string">
+| <Char: "CHAR" | "Char" | "char">
+| <TypeCompo : "Fenetre"| "Boite Dialogue"| "Panel"| "Bouton"|"Champs Texte"|"Combo Box"| "Liste Deroulante"| "Case A cochet"|"Bouton Radio"|"Icone"|"Menu" >
+| <Type1: "DbClick" |"Click"|"Drag"|"Drop"|"ChrKeyPress"|"NumKeyPress"|"EntrerKeyPress"|"EnterPress">
+| <Type2Fen: "ClickBtFerm" |"ClickBtRed"|"ClickBtArg"|"ClickTitre" >
+
+| <LOGIC_CONSTANT: "True" | "false">
+| < NUMBER : (<DIGIT>)+ >
+| <IDLIB: <LETTER>(<LETTER>|<DIGIT>)*>
+|  <#LETTER: (["a"-"z","A"-"Z"])>
+| < #DIGIT : ["0" - "9"] >
+}
+
+
+
+
+//*****************************************/
+/*****         La grammaire          *****/
+/*****************************************/
+
+interafc Prog() : {interafc ini;}
+{
+  (ini = S())<EOF>{return ini;}
+}
+
+interafc S() : {ArrayList<Composant> list = new ArrayList<Composant>();Automate aut ; interafc ini = new interafc();}
+{
+   <DEBUT> (list = Interface()) Init() (aut=Actions()) <FIN>{ini.setAut(aut); ini.setCompos(list); return ini;}
+}
+
+ArrayList<Composant> Interface() : {ArrayList<Composant> list = new ArrayList<Composant>();}
+{
+   (<INTERFACE> (list = ListComposant()){return list;})
+}
+
+ArrayList<Composant> ListComposant() : {ArrayList<Composant> list = new ArrayList<Composant>(); Composant c;}
+{
+    (c=Composant()){list.add(c);}{}<SEMIC>((c=Composant()){list.add(c);}<SEMIC>)*
+{return list;} 
+}
+
+Composant Composant() : 
+{
+Token a,b;
+String cont; 
+ArrayList<String> invs = null;
+ArrayList<String> events = null;
+ArrayList<propiete> props = null;
+}
+{
+<COMPOSANT> 
+(a = <IDLIB>){Composant c = new Composant(); intermediar i = null ;c.setNom(a.image);/*System.out.println(c.getNom());*/} 
+<POINTS> 
+(b = <TypeCompo>){c.setType(b.image);/*System.out.println(c.getType());*/} 
+(cont  = choice1()){c.setContainer(cont);} 
+(props = Propi())
+{c.setprops(props);System.out.println((props.get(0)).getType());} 
+(i = choice())
+{c.setinvs(i.getInvs());c.setevents(i.getEvents());System.out.println(c.getEvents());}
+{return c;}
+}
+
+String choice1() : {Token cont;}
+{
+"("(cont = <IDLIB>)")" <SEMIC> {return cont.image;} | <SEMIC> {return "";}
+}
+
+intermediar choice() : {intermediar i = new intermediar() ; ArrayList<String> invs = null; ArrayList<String> events = null; }
+{
+ (invs = Invs())(events = Events()){i.setinvs(invs);i.setevents(events);return i;} | (events = Events()){i.setevents(events);return i;}  
+}
+
+ArrayList<String> Invs() : {ArrayList<String> invs;}
+{
+<INV> (invs = ListInv()){return invs;}
+}
+
+ArrayList<String> ListInv() : {String inv; ArrayList<String> invs = new ArrayList<String>() ;}
+{
+(inv = Inv()){invs.add(inv);}
+(<SEMIC>(inv = Inv()){invs.add(inv);})*
+{return invs;}
+}
+
+String Inv() : {Token inv;}
+{
+(inv = <IDLIB>) <ASSIGN> (<IDLIB> | <NUMBER> | <LOGIC_CONSTANT>){return inv.image;}
+}
+
+ArrayList<propiete> Propi() : {ArrayList<propiete> list = new ArrayList<propiete>();}
+{
+<PROP> (list = ListProp()){return list;}
+}
+
+ArrayList<propiete> ListProp() : {propiete p; ArrayList<propiete> list = new ArrayList<propiete>();}
+{
+    (p = Prop()){list.add(p);}<SEMIC>((p = Prop()){list.add(p);}<SEMIC>)*{return list;}
+}
+
+ propiete Prop() :{ propiete p = new  propiete(); String type; ArrayList<String> props = new ArrayList<String>();}
+{
+ (props = ListIDLIB()) <POINTS> (type = IDLIBs()){p.setNom(props); p.setType(type); return p;}
+}
+
+ArrayList<String> ListIDLIB() : {Token t; ArrayList<String> props = new ArrayList<String>() ;}
+{
+  (t = <IDLIB>){props.add(t.image);} (<COMMA> (t = <IDLIB>){props.add(t.image);})*{return props;}
+}
+
+String IDLIBs() :{String type;}
+{
+  <OPENACCOLADE> ListeIDLIB() <CLOSEDACCOLADE>{type = "Enum"; return type;}
+| <Bool> {type = "Booleen"; return type;}
+| <Int> {type = "Entier"; return type;}
+| <String> {type = "String"; return type;}
+| <Char> {type = "Char"; return type;}
+}
+
+void ListeIDLIB() : {}
+{
+ <IDLIB>(<COMMA> <IDLIB>)*
+}
+
+ArrayList<String> Events() : {ArrayList<String> types = new ArrayList<String>() ;}
+{
+ <EVT> (types=ListEvent()){return types;}
+}
+
+ArrayList<String> ListEvent() : {String type; ArrayList<String> types = new ArrayList<String>() ;}
+{
+  (type = Event()){types.add(type);}<SEMIC>((type = Event()){types.add(type);}<SEMIC>)* {return types;}
+}
+
+String Event() : {String type;}
+{
+   (type = TypeEvent()) choice3() ListTypeEvent() <CLOSEDACCOLADE> {return type;}
+}
+
+void choice3() : {}
+{
+"("<IDLIB>")" <OPENACCOLADE> | <OPENACCOLADE>
+}
+
+String TypeEvent() : {Token t;}
+{
+(t = <Type1>){return t.image;} | (t=<Type2Fen>){return t.image;}
+}
+
+void ListTypeEvent() : {}
+{
+(IFCond() | Aff()) (<SEMIC> (IFCond() | Aff()))*
+}
+
+void IFCond() : {}
+{
+<IF> Condition() <THEN> (Affectation() | IFCond())
+}
+
+void Condition() : {}
+{
+   <IDLIB> SensCond() (<IDLIB> | <NUMBER> | <LOGIC_CONSTANT>)
+}
+
+void SensCond() : {}
+{
+    <Equal> 
+|   <Diffrent>
+|   <Comp>
+}
+
+void Affectation() : {}
+{
+Aff() (<AND>Aff())*
+}
+
+void Aff() : {}
+{
+   E() (<ASSIGN> E())?
+}
+
+void E() : {}
+{
+  T()((<PLUS_SIGN>|<MINUS_SIGN>)T())*
+}
+
+void T(): {}
+{
+  F()((<MULT_SIGN>|<DIV_SIGN>)F())*
+}
+
+void F() :{}
+{
+  <LBR> E() <RBR> | <IDLIB> | <NUMBER> | <LOGIC_CONSTANT> | "'"<IDLIB>"'"
+}
+
+void Init() : {}
+{
+   <INIT> ListInit()
+}
+
+void ListInit() : {}
+{
+   InitObj()<SEMIC>(InitObj()<SEMIC>)*
+}
+
+void InitObj() : {}
+{
+   <IDLIB> <Relation> <IDLIB> <ASSIGN> (<IDLIB> | <NUMBER> | <LOGIC_CONSTANT>) 
+}
+
+Automate Actions() : {Automate aut ;}
+{
+<ACTIONS> (aut=ListActions()){return aut;}
+}
+
+Automate ListActions() : 
+{int n=0;
+ int j=0;
+ int i=0;
+ int k=0;
+ Automate aut = new Automate();
+ Liste[][] trans = new Liste[128][128];
+ aut.setQ0(n);
+ String tran;
+}
+{
+((<OPENACCOLADE> ListActions() 
+(tran=transit())
+{if(tran == ";")
+{
+trans[n++][j++] = new Liste(n, null);
+}
+else if(tran == "+")
+    {
+     trans[n++][j++] = new Liste(n++, new Liste(n++, null));
+    }
+    else if (tran == "~")
+    {
+     i = n;
+     k = n + 1;
+     trans[n++][j++] = new Liste(k, null);
+     trans[k][j++] = new Liste(j, null);
+    }
+}
+ ListActions()
+(((tran = transit())
+{if(tran == ";")
+{
+trans[n++][j++] = new Liste(n, null);
+}
+else if(tran == "+")
+    {
+     trans[n++][j++] = new Liste(n++, new Liste(n++, null));
+    }
+    else if (tran == "~")
+    {
+     i = n;
+     k = n + 1;
+     trans[n++][j++] = new Liste(k, null);
+     trans[k][j++] = new Liste(j, null);
+    }
+}
+ ListActions())*)
+<CLOSEDACCOLADE>)
+(((tran = transit())
+{if(tran == ";")
+{
+trans[n++][j++] = new Liste(n, null);
+}
+else if(tran == "+")
+    {
+     trans[n++][j++] = new Liste(n++, new Liste(n++, null));
+    }
+    else if (tran == "~")
+    {
+     i = n;
+     k = n + 1;
+     trans[n++][j++] = new Liste(k, null);
+     trans[k][j++] = new Liste(j, null);
+    }
+}
+ ListActions())*){aut.setTransit(trans); return aut;}
+
+) | singleAction(){aut.setTransit(trans); return aut; }
+}
+
+String transit() : {Token t;}
+{
+(t=<SEMIC>){return t.image;}|(t=<PLUS_SIGN>){return t.image;}|(t=<CHOIX>){return t.image;}
+}
+
+void singleAction() : {}
+{
+<Type1><LBR><IDLIB><RBR>
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

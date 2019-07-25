@@ -1,0 +1,65 @@
+Composant 1 :
+  Nom du Composant : FenP
+  Type du Composant : Fenetre
+  Container du composant : 
+  Liste des Propriétés du composant :
+   {Position, } : Enum
+   {Visible, } : Booleen
+   {Xpos, Ypos, } : Entier
+  Liste des évenements du composant :
+    ClickBtFerm
+    ClickBtRed
+    ClickBtArg
+    ClickTitre
+
+Composant 2 :
+  Nom du Composant : MenuH
+  Type du Composant : Menu
+  Container du composant : FenP
+  Liste des Propriétés du composant :
+   {ItemChoisi, } : Enum
+   {Actif, Visible, } : Booleen
+  Liste des évenements du composant :
+    Click
+
+Composant 3 :
+  Nom du Composant : Commande
+  Type du Composant : Menu
+  Container du composant : MenuH
+  Liste des Propriétés du composant :
+   {Option, } : Enum
+   {Deployer, } : Booleen
+  Liste des évenements du composant :
+    Click
+    EnterPress
+
+Composant 4 :
+  Nom du Composant : Plan
+  Type du Composant : Panel
+  Container du composant : FenP
+  Liste des Propriétés du composant :
+   {NbreObjet, } : Entier
+   {ListObjet, } : Enum
+   {Actif, } : Booleen
+  Liste des évenements du composant :
+    Click
+    Drag
+
+Composant 5 :
+  Nom du Composant : BtProjection
+  Type du Composant : Bouton
+  Container du composant : FenP
+  Liste des Propriétés du composant :
+   {Etat, } : Enum
+  Liste des évenements du composant :
+    Click
+
+Composant 6 :
+  Nom du Composant : BtDistance
+  Type du Composant : Bouton
+  Container du composant : FenP
+  Liste des Propriétés du composant :
+   {Etat, } : Enum
+  Liste des évenements du composant :
+    Click
+
